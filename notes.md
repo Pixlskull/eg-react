@@ -118,3 +118,21 @@ Has TrackModel and the collections have numTracks
 **mm10**
 same model as hg19
 
+3/30/20
+**AppStateLoader**
+In charge of serializing and deserializing the app state
+A lot of properties in appstate do not directly have a serialize or deserialize method
+Sends Json string and receives Json blob
+
+**DataHubParser**
+for each plainObject, checks to see if it has a url
+for new hub format, plain object is fed as an argument to create a track model object
+Function has a section for handling old hub format
+
+**Binning**
+xrange function
+can convert region to bin or bins
+has a bitwise operator in it
+binning used in concert with mysql to speed processes
+
+
