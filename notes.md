@@ -83,7 +83,7 @@ Does some math to calculate the amount needed to expand the region
 Creates NavigationContext with flanked features
 
 **DisplayModes**
-Contains a bunch of enums for display settings, not sure why some are consts
+Contains a bunch of 4ms for display settings, not sure why some are consts
 
 **DisplayedRegionModel**
 Contains navigationContext, and decides the viewing area
@@ -507,4 +507,181 @@ either returns the segment name or the coordinate
 uses the colored box component
 describes track metadata
 box is created for each term
+
+**Track**
+all default props are optional
+xOffset, onContextMenu, onClick, onMetadataClick, options
+viewWindow component
+renders div (kinda obvious in retrospect)
+legend is a key part
+
+**TrackLegend**
+displays important track info
+also returns a div
+
+**AnnotationArrows**
+code is mainly math for the arrow spacing and stuff like that
+returns svgs
+
+**AnnotationTrack**
+either returns numerical track or full display mode
+also the function is passed through withOptionMerging
+
+**FeatureDetail**
+box with feature details
+div
+
+**FullDisplayMode**
+contains FullVisualizer
+returns track
+
+**configOptionMerging**
+don't fully understand this, will come back to it.
+
+**NumericalTrack**
+returns track
+visualizer contains valueplot
+valueplot returns designrender
+also contains hoverTooltipContext
+
+**HoverTooltipContext**
+returns div
+on hover creates a tooltip element
+
+**Tooltip**
+OutsideClickDetector will close the tooltip
+render checks if tooltip has children
+manager element
+stopPropagation prevents the event from sending up the tree
+
+**withTooltip**
+allows toolTips to be rendered as children
+callbacks allow for that
+returns wrappedComponent
+**GeneAnnotation**
+a svg
+has intron and exon arrows which are AnnotationArrows
+centerLine is a line element
+exonClip is a clipPath
+utr arrows and rects are rect elements
+uses featurePlacer
+
+**GeneAnnotationTrack**
+returns annotationTrack
+geneAnnotationScaffold
+tooltip contains GeneDetail
+
+**GeneDetail**
+displays gene details
+returns div with FeatureDetail
+
+**image_snapshots**
+
+**BrowserScene**
+for every track, return react fragment with component3D, VrRuler, and a-text
+if of type hic or longrange will return interaction track
+children within a-scene
+
+**Custom3DObject**
+will call setObject3D on its node
+returns a-entity
+
+**VrRuler**
+returns custom3DObject with lines and text
+makeLines returns three.LineSegment
+makeText returns three.mesh
+uses rulerDesigner
+
+**mergeGeometries**
+merges array of BufferGeometry
+
+**withAutoDimensions**
+automatically sets dimensions
+based on node.clientDimensions
+
+**withCurrentGenome**
+makes it so that the component class always has genome configuration
+**DataSource**
+getData has three parameters
+DisplayedRegionModel region for which to fetch data
+basesPerPixel, Higher = more zoomed out
+options
+returns promise
+cleanUp functions as destructor
+**GeneSource**
+takes in a trackModel
+getData takes region
+**TwoBitSource**
+gets 2bit data from url
+constructor requires url
+getSequenceInInterval gets a sequence from a genome interval
+
+**Bed.worker**
+runs registerWorkerRunnableSource(BedSourceWorker)
+the function allows the data source class to be run in a webworker context
+not sure exactly what that is
+
+**BedSourceWorker**
+extends WorkerRunnableSource 
+gets BedRecords from remote bed files
+not sure exactly what that is either
+
+**Big.worker**
+registerWorkerRunnableSource(BigSourceWorker);
+**BigSourceWorker**
+extends WorkerRunnableSource 
+gets data from bigwig or bigbed
+need to do more research on this
+
+**WorkerMessage**
+MessageWriter and MessageReader class
+writer takes a worker
+writer has send init message, send get message, and send delete message
+all use worker.postMessage
+reader handles messages of type init, run, and delete 
+
+**WorkerRunnableSource**
+seems to be an abstract class
+source of data that webworkers can run
+
+**WorkerSource**
+contains workerManager and workerSource which extends runnableSource
+getInstance in workerManager returns instance or creates a new worker
+workerSource takes a workerClass
+constructor creates messageWriter and sends init message
+cleanUp sends delete message and sets messageWriter to null
+getData sends a getDataMessage
+
+**registerWorkerRunnableSource**
+clientmanager takes WorkerRunnableSource, has insert, run, and delete function for the sources
+registerWorkerRunnableSource runs the registerPromiseWorker function, 
+returns messageReader.handleMessage(message, clientManager)
+
+**index**
+seems to be the root file
+need to figure out what (window as any) does
+stuff is inside a Provider
+
+**registerServiceWorker**
+allows page to load faster and work somewhat offline
+however, updates will only be seen after all tabs to the site are closed
+
+**setupTests**
+runs configure({ adapter: new Adapter() });
+
+**geneAnnotationStories**
+all commented out
+seems to render annotations for genes
+
+**genomeNavStories**
+renders two views
+
+**testUtils**
+runs AppState.dispatch(ActionCreators.setGenome("hg19"));
+return Provider store={AppState} {...props} ;
+seems like a setup for a test
+
+**util**
+contains utility functions
+functions such as event coordinates, math related stuff, =colors
 
