@@ -157,6 +157,8 @@ Appears to load babel presets and plugins to get sourcemaps to work.
 Contains pretty much everything
 Most of the code deals with tracks, tracks are the most important component that the app manages
 Will come back after getting more comfortable with react
+If loading from previous session, will return a LoadSession component
+If no genome has been selected, app will return genome selection screen
 
 **AppState**
 storage for the app
