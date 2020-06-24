@@ -8,8 +8,6 @@ import { variableIsObject } from "../../util";
 import FacetWorker from "./FacetTable.worker";
 import "./FacetTable.css";
 
-const DEFAULT_ROW = "Sample";
-const DEFAULT_COLUMN = "Assay";
 export const UNUSED_META_KEY = "notused";
 
 /**
@@ -56,6 +54,7 @@ class FacetTable extends Component {
     }
 
     componentDidMount() {
+        this.worker = new FacetWorker();
         this.initializeTracks(this.props.tracks);
     }
 
@@ -66,65 +65,13 @@ class FacetTable extends Component {
     }
 
     initializeTracks(allTracks) {
-        const worker = new FacetWorker();
-        worker.postMessage(allTracks);
-        worker.onmessage = e => {
+        this.worker.postMessage(allTracks);
+        this.worker.onmessage = e => {
             let tracks = [];
-            let rawtracks = e.data.rawtracks;
-            const parent2children = e.data.parent2children;
-            const child2ancestor = e.data.child2ancestor
-            const metaKeys = e.data.metaKeys;
-            //this part of the calculations is done out of the webworker, because webworkers can't send class information
-            for (let track of rawtracks) {
-                let metadata = {};
-                for (let [metaKey, metaValue] of Object.entries(track.metadata)) {
-                    let lastValue, newValue;
-                    if (Array.isArray(metaValue)) {
-                        // array metadata
-                        lastValue = metaValue[metaValue.length - 1];
-                    } else {
-                        // string metadata
-                        lastValue = metaValue;
-                    }
-                    if (_.has(parent2children, lastValue)) {
-                        if (Array.isArray(metaValue)) {
-                            newValue = [...metaValue, `(${lastValue})`];
-                        } else {
-                            newValue = [...[metaValue], `(${lastValue})`];
-                        }
-                        if (!parent2children[lastValue]) {
-                            parent2children[lastValue] = new Set();
-                        }
-                        parent2children[lastValue].add(`(${lastValue})`);
-                        metadata[metaKey] = newValue;
-                    } else {
-                        metadata[metaKey] = metaValue;
-                    }
-                }
-                let newTrack = { ...track, metadata: metadata };
-                tracks.push(new TrackModel(newTrack));
-            }
-            const rowHeader = metaKeys.includes(DEFAULT_ROW) ? DEFAULT_ROW : metaKeys[0];
-            let columnHeader =
-                metaKeys.includes(DEFAULT_COLUMN) && DEFAULT_COLUMN !== rowHeader ? DEFAULT_COLUMN : metaKeys[1];
-            const rowList = [
-                {
-                    name: rowHeader,
-                    expanded: false,
-                    children: parent2children[rowHeader]
-                }
-            ];
-            let columnList;
-            if (columnHeader) {
-                columnList = [
-                    {
-                        name: columnHeader,
-                        expanded: false,
-                        children: parent2children[columnHeader]
-                    }
-                ];
-            } else {
-                columnList = [{ name: "--" }];
+            const {trackInfo, rowList, columnList, parent2children, child2ancestor, metaKeys, rowHeader, columnHeader} = e.data;
+            
+            for (let info of trackInfo){
+                tracks.push(new TrackModel(info));
             }
             this.props.addTermToMetaSets(metaKeys);
             this.setState({
@@ -135,7 +82,7 @@ class FacetTable extends Component {
                 child2ancestor,
                 metaKeys,
                 rowHeader,
-                columnHeader: columnHeader ? columnHeader : UNUSED_META_KEY
+                columnHeader,
             });
         }
     }
