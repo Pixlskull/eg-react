@@ -8,6 +8,8 @@ import { variableIsObject } from "../../util";
 import FacetWorker from "./FacetTable.worker";
 import "./FacetTable.css";
 
+const DEFAULT_ROW = "Sample";
+const DEFAULT_COLUMN = "Assay";
 export const UNUSED_META_KEY = "notused";
 
 /**
@@ -54,10 +56,16 @@ class FacetTable extends Component {
     }
 
     componentDidMount() {
-        this.worker = new FacetWorker();
+        if (window.Worker) {
+            this.worker = new FacetWorker();
+        }
         this.initializeTracks(this.props.tracks);
     }
-
+    componentWillUnmount() {
+        if (this.worker) {
+            this.worker.terminate();
+        }
+    }
     componentWillReceiveProps(nextProps) {
         if (nextProps.tracks !== this.props.tracks) {
             this.initializeTracks(nextProps.tracks);
@@ -65,15 +73,132 @@ class FacetTable extends Component {
     }
 
     initializeTracks(allTracks) {
-        this.worker.postMessage(allTracks);
-        this.worker.onmessage = e => {
-            let tracks = [];
-            const {trackInfo, rowList, columnList, parent2children, child2ancestor, metaKeys, rowHeader, columnHeader} = e.data;
-            
-            for (let info of trackInfo){
-                tracks.push(new TrackModel(info));
+        if (this.worker) {
+            this.worker.postMessage(allTracks);
+            this.worker.onmessage = e => {
+                let tracks = [];
+                const { trackInfo, rowList, columnList, parent2children, child2ancestor, metaKeys, rowHeader, columnHeader } = e.data;
+
+                for (let info of trackInfo) {
+                    tracks.push(new TrackModel(info));
+                }
+                this.props.addTermToMetaSets(metaKeys);
+                this.setState({
+                    rowList,
+                    columnList,
+                    tracks,
+                    parent2children,
+                    child2ancestor,
+                    metaKeys,
+                    rowHeader,
+                    columnHeader,
+                });
             }
+        }
+        else {
+            const allKeys = allTracks.map(track => Object.keys(track.metadata));
+            const metaKeys = _.union(...allKeys);
             this.props.addTermToMetaSets(metaKeys);
+            let tracks = []; // fix dup metadata
+            let rawtracks = []; //add raw metadata after dup remove, add is
+            const parent2children = {}; // key: parent terms, value: set of [child terms]
+            const child2ancestor = {};
+            for (let meta of metaKeys) {
+                parent2children[meta] = new Set();
+                child2ancestor[meta] = meta; // add 'sample': sample as well
+            }
+            for (let track of allTracks) {
+                let metadata = {};
+                for (let [metaKey, metaValue] of Object.entries(track.metadata)) {
+                    if (Array.isArray(metaValue)) {
+                        metaValue = _.uniq(metaValue);
+                        // array metadata, also need check length
+                        if (metaValue.length > 1) {
+                            // need loop over the array, constuct new key in parent2children hash
+                            for (let [idx, ele] of metaValue.entries()) {
+                                if (idx < metaValue.length - 1) {
+                                    if (!parent2children[ele]) {
+                                        parent2children[ele] = new Set();
+                                    }
+                                    parent2children[ele].add(metaValue[idx + 1]);
+                                    child2ancestor[ele] = metaKey;
+                                }
+                            }
+                        }
+                        parent2children[metaKey].add(metaValue[0]);
+                        child2ancestor[metaValue[0]] = metaKey;
+                    } else {
+                        if (variableIsObject(metaValue)) {
+                            parent2children[metaKey].add(metaValue.name);
+                            child2ancestor[metaValue.name] = metaKey;
+                        } else {
+                            // string metadata
+                            parent2children[metaKey].add(metaValue);
+                            child2ancestor[metaValue] = metaKey;
+                        }
+                    }
+                    metadata[metaKey] = metaValue;
+                }
+                let newTrack = { ...track, metadata: metadata };
+                rawtracks.push(newTrack);
+            }
+            //console.log(rawtracks);
+            //if metadata has dup, say liver > right liver, liver, liver > left liver, a new item (liver) will be generated
+            // liver
+            //    (liver)
+            //    right liver
+            //    left liver
+            for (let track of rawtracks) {
+                let metadata = {};
+                for (let [metaKey, metaValue] of Object.entries(track.metadata)) {
+                    let lastValue, newValue;
+                    if (Array.isArray(metaValue)) {
+                        // array metadata
+                        lastValue = metaValue[metaValue.length - 1];
+                    } else {
+                        // string metadata
+                        lastValue = metaValue;
+                    }
+                    if (_.has(parent2children, lastValue)) {
+                        if (Array.isArray(metaValue)) {
+                            newValue = [...metaValue, `(${lastValue})`];
+                        } else {
+                            newValue = [...[metaValue], `(${lastValue})`];
+                        }
+                        if (!parent2children[lastValue]) {
+                            parent2children[lastValue] = new Set();
+                        }
+                        parent2children[lastValue].add(`(${lastValue})`);
+                        metadata[metaKey] = newValue;
+                    } else {
+                        metadata[metaKey] = metaValue;
+                    }
+                }
+                let newTrack = { ...track, metadata: metadata };
+                tracks.push(new TrackModel(newTrack));
+            }
+            const rowHeader = metaKeys.includes(DEFAULT_ROW) ? DEFAULT_ROW : metaKeys[0];
+            let columnHeader =
+                metaKeys.includes(DEFAULT_COLUMN) && DEFAULT_COLUMN !== rowHeader ? DEFAULT_COLUMN : metaKeys[1];
+            const rowList = [
+                {
+                    name: rowHeader,
+                    expanded: false,
+                    children: parent2children[rowHeader]
+                }
+            ];
+            let columnList;
+            if (columnHeader) {
+                columnList = [
+                    {
+                        name: columnHeader,
+                        expanded: false,
+                        children: parent2children[columnHeader]
+                    }
+                ];
+            } else {
+                columnList = [{ name: "--" }];
+            }
             this.setState({
                 rowList,
                 columnList,
@@ -82,7 +207,7 @@ class FacetTable extends Component {
                 child2ancestor,
                 metaKeys,
                 rowHeader,
-                columnHeader,
+                columnHeader: columnHeader ? columnHeader : UNUSED_META_KEY
             });
         }
     }
