@@ -1,0 +1,39 @@
+{
+
+Genes : [
+	{name:'pombase_gene',label:'PomBase gene',
+		filetype:'hammock',
+		url:'https://egg.wustl.edu/d/spombe201203/pombe_annotation.gz',
+		queryUrl:'https://www.pombase.org/spombe/result/',
+		boxcolor:'#002EB8',
+                "categories": {
+                    "1": ["ncRNA","#f37736"],
+                    "2": ["protein coding gene","#0392cf"],
+                    "3": ["snoRNA","#858585"],
+                    "4": ["rRNA","#858585"],
+                    "5": ["snRNA","#858585"],
+                    "6": ["tRNA","#7bc043"],
+                    "-1": ["no information","transparent"]
+                },
+		isgene:true,dbsearch:true },
+],
+
+Repeat : [
+	{name:'repeat',label:'LTR and repeats',
+		filetype:'bed',
+		url:'https://egg.wustl.edu/d/spombe201203/repeat.gz',
+	},
+],
+
+
+'G/C related' : [
+	{name:'gc5Base',label:'GC percent',
+		filetype:'bigwig',
+		url:'https://egg.wustl.edu/d/spombe201203/gc5Base.bigWig',
+		height:50,
+		colorpositive:'#4785C2/#4747C2',
+		fixedscale:{min:0,max:100},
+	},
+],
+
+}
