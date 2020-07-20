@@ -135,4 +135,56 @@ can convert region to bin or bins
 has a bitwise operator in it
 binning used in concert with mysql to speed processes
 
+3/31/20
+**Gene**
+Extends Feature
+Is constructed from mongoDB entry
+dbrecord is parsed to get this._translated and this._utrs
+parseDetails get translated and untranslated regions
+
+**RepeatMaskerFeature**
+Has a divergence value based on milliDiv, subtracted from value
+NumericalFeature also has value
+Multiple types of repeats
+
+**Track Model**
+Constructor uses a lot of "or" expressions
+Creates Track Model from an object
+MetaData has the important info
+Clone methods are shallow copies
+MetaData can be obtained as string, array of strings, or return meta value defined by user "asis"
+Need to look into the ? when defining variables
+
+**config-override**
+Appears to load babel presets and plugins to get sourcemaps to work.
+
+4/1/20
+**App**
+Contains pretty much everything
+Most of the code deals with tracks, tracks are the most important component that the app manages
+Will come back after getting more comfortable with react
+
+**AppState**
+storage for the app
+simulates localstorage
+enum actiontype
+Will come back after getting more comfortable with react
+
+**DesignRenderer**
+Renders SVGs
+Can draw on canvas or svg
+CanvasDesignRender appears to draw on a canvasnode it is given
+has cases for different shapes
+Adjusts for device pixel ratio
+
+**Designer**
+a Designer can make a design without worrying about specifics of canvas, svg, etc.
+Not made yet (check on branches aside from dev)
+
+**Ruler Designer**
+Creates the ruler for the coordinates
+Has property for tick seperation and decimals points
+Updates units based on magnitude
+Uses LinearDrawingModel
+RulerElementFactory returns svg elements for lines and ticks/their text
 
